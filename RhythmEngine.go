@@ -6,6 +6,7 @@ import (
 	"os"
 	"io"
 	"strings"
+	"sort"
 )
 
 type VnDictionary struct {
@@ -17,9 +18,53 @@ type VnDictionary struct {
 	Indexing map[string][]int
 }
 
+// The find method of VnDictionary looks for the entry that has
+// the matched word.
+// Input: the keyword. Output: list of matched entries.
+// To avoid copying the VnDictionary object, we would better use pointer.
+func (dict *VnDictionary) FindAll(keyword string) []string{
+	// Get the list of entries for the given keyword.
+	entriesList, found := dict.Indexing[keyword]
+	// Check the existence of the keyword in the index.
+	if found {
+		sort.Ints(entriesList)
+		entriesList = duplicatesEliminate(entriesList)
+	}
+	// Retrieves entries from the list of words.
+	results := make([]string, 0)
+	for _,v := range entriesList {
+		results = append(results, dict.WordList[v])
+	}
+	return results
+}
+
+func duplicatesEliminate (list []int) []int {
+	newList := make([]int, 0)
+	currentValue := -1
+	for _, value := range list {
+		if currentValue != value {
+			newList = append(newList, value)
+			currentValue = value
+		}
+	}
+	return newList
+}
+
+
 func main() {
 	vnDict, _ := buildListAndIndex("./vn_dict.txt")
-	writeFile("output.txt", vnDict.Indexing)
+	writeFile("index.txt", vnDict.Indexing)
+
+	// Keyword to search
+	keyword := "Mưa"
+
+	keyword = strings.ToLower(keyword)
+	results := vnDict.FindAll(keyword)
+	fmt.Printf("\nWords that rhythms with '%v' are:", keyword)
+	for _, entry := range results{
+		fmt.Printf("\n%v", entry)
+	}
+	fmt.Println("\n=== END ===")
 }
 
 func writeFile(fileName string, content interface{}) {
